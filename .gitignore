@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Recordings — bench.py fixtures and anything save_input_wav_path produces.
+# These are captured audio of whoever ran it.
+*.wav

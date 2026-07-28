@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""Client for the voicectl daemon. Stdlib only, so it starts fast enough to
+sit on a keybind."""
+
+import os
+import socket
+import sys
+from pathlib import Path
+
+SOCKET_PATH = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "voicectl.sock"
+USAGE = "usage: voicectl {start|stop|cancel|last|retro [seconds]|status|quit}"
+
+
+def main() -> None:
+    if len(sys.argv) < 2:
+        sys.exit(USAGE)
+
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.connect(str(SOCKET_PATH))
+    except (FileNotFoundError, ConnectionRefusedError):
+        sys.exit("voicectl: daemon not running — systemctl --user start voicectl")
+
+    with sock:
+        sock.sendall(" ".join(sys.argv[1:]).encode())
+        reply = sock.recv(8192).decode().strip()
+        if reply:
+            print(reply)
+
+
+if __name__ == "__main__":
+    main()

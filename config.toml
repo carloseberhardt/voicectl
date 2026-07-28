@@ -1,0 +1,60 @@
+# voicectl configuration
+
+[audio]
+# PipeWire source to capture from. Empty uses your default input device, which
+# is usually what you want. Set it explicitly if you have more than one mic and
+# don't want the choice left to chance — `pactl list short sources` lists them,
+# e.g. "alsa_input.usb-Some_Vendor_Some_Mic-00.analog-stereo".
+source = ""
+sample_rate = 16000
+# How much audio to keep resident. Only `preroll_ms` of this is used for
+# push-to-talk; the rest exists so `retro` can reach back after the fact.
+ring_seconds = 15
+# Audio captured *before* the key went down, to recover the leading word or
+# two you always start saying before your hand catches up.
+preroll_ms = 1000
+# Audio collected *after* the key comes up. The capture pipeline runs behind
+# real time, so at the moment of release the last fraction of a second is
+# still in flight; without this it never reaches the buffer before we stop.
+# Also forgives releasing the key a beat early.
+postroll_ms = 400
+# How much audio to hand the model at a time.
+chunk_ms = 100
+# How much to pull from pw-record per read. Smaller means less audio sitting
+# in flight when you let go, at the cost of more wakeups.
+read_block_ms = 20
+# Requested PipeWire capture latency. Same tradeoff as read_block_ms.
+latency_ms = 20
+
+[model]
+path = "~/.cache/moonshine_voice/download.moonshine.ai/model/medium-streaming-en/quantized"
+arch = "MEDIUM_STREAMING"
+
+[model.options]
+# Native C API options. Every TranscriptLine otherwise carries a full copy of
+# its own audio, which is pure waste in a long-running daemon.
+return_audio_data = "false"
+
+[output]
+# How to join Moonshine's transcript lines. " " keeps everything on one line so
+# a stray newline can never submit a prompt early. "\n" preserves the breaks.
+line_join = " "
+# Insurance against wl-copy's fork not having claimed the selection yet.
+paste_delay_ms = 50
+# Set false to copy to the primary selection but not synthesize the paste,
+# leaving you to press Shift+Insert yourself.
+auto_paste = true
+# Appended to every paste. Consecutive push-to-talk sessions otherwise run
+# straight together with no separator.
+suffix = " "
+
+# Applied to the transcript before injection, longest-first, case-insensitive
+# at word boundaries. Moonshine has no vocabulary biasing, so this is where
+# jargon it reliably mangles gets corrected. Add entries as they annoy you.
+[substitutions]
+"you wsm" = "uwsm"
+"wl roots" = "wlroots"
+"wayland roots" = "wlroots"
+"pipe wire" = "pipewire"
+"mango w c" = "mangowc"
+"see pu" = "CPU"

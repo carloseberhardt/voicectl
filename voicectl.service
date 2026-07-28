@@ -1,0 +1,15 @@
+[Unit]
+Description=voicectl push-to-talk dictation daemon
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+# %h is the user's home directory. Adjust if you cloned somewhere other than
+# ~/projects/voicectl — systemd has no specifier for "wherever this unit lives".
+ExecStart=%h/projects/voicectl/.venv/bin/python %h/projects/voicectl/voicectld.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target
