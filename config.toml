@@ -44,6 +44,11 @@ paste_delay_ms = 50
 # Set false to copy to the primary selection but not synthesize the paste,
 # leaving you to press Shift+Insert yourself.
 auto_paste = true
+# Focused-window app_ids (from `mmsg get focusing-client`) that paste the primary
+# selection on Shift+Insert — terminals, basically. Any other focused app gets
+# the text typed out by wtype instead, because GUI apps paste the *clipboard*
+# on Shift+Insert and would ignore the primary selection.
+paste_keystroke_apps = ["kitty"]
 # Appended to every paste. Consecutive push-to-talk sessions otherwise run
 # straight together with no separator.
 suffix = " "

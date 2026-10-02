@@ -14,6 +14,7 @@ Control it with the `voicectl` client; see README.md.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import signal
@@ -335,6 +336,7 @@ class Injector:
         self.delay = cfg["paste_delay_ms"] / 1000
         self.auto_paste = cfg["auto_paste"]
         self.suffix = cfg.get("suffix", " ")
+        self.keystroke_apps = set(cfg.get("paste_keystroke_apps", ["kitty"]))
         self.last_text = ""
 
     def send(self, lines: list[str]) -> str:
@@ -350,12 +352,29 @@ class Injector:
             return ""
         return self._emit(self.last_text)
 
+    @staticmethod
+    def focused_appid() -> str:
+        """app_id of the focused window via mango's mmsg, or "" if unknown."""
+        try:
+            out = subprocess.run(
+                ["mmsg", "get", "focusing-client"], capture_output=True, text=True, timeout=1
+            ).stdout
+            return json.loads(out).get("appid", "") or ""
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            return ""
+
     def _emit(self, payload: str) -> str:
         subprocess.run(["wl-copy", "--primary"], input=payload.encode(), check=True)
         if self.auto_paste:
-            # wl-copy forks to serve the selection; give it a beat to claim it.
-            time.sleep(self.delay)
-            subprocess.run(["wtype", "-M", "shift", "-k", "Insert", "-m", "shift"], check=True)
+            appid = self.focused_appid()
+            if not appid or appid in self.keystroke_apps:
+                # Terminals paste primary on Shift+Insert. GUI apps paste the
+                # clipboard on it instead, so for those the text gets typed out.
+                # wl-copy forks to serve the selection; give it a beat to claim it.
+                time.sleep(self.delay)
+                subprocess.run(["wtype", "-M", "shift", "-k", "Insert", "-m", "shift"], check=True)
+            else:
+                subprocess.run(["wtype", "-"], input=payload.encode(), check=True)
         self.last_text = payload
         shown = payload.strip()
         log(f"sent {len(payload)} chars: {shown[:70]}{'...' if len(shown) > 70 else ''}")

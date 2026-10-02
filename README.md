@@ -159,10 +159,13 @@ trigger them is up to you.
 
 **The paste keystroke.** `wtype -M shift -k Insert -m shift` assumes your
 terminal maps Shift+Insert to paste-from-primary. kitty does by default, as do
-most terminals following the xterm convention. GUI applications generally use
-middle-click for primary instead, and middle-click pastes at the pointer rather
-than the caret — so for browsers you may want `ydotool` typing the text out
-instead, which needs `/dev/uinput` access.
+most terminals following the xterm convention. GUI applications (Firefox,
+Slack, ...) paste the *clipboard* on Shift+Insert and only read primary on
+middle-click, which lands at the pointer rather than the caret. So the daemon
+asks mango which window has focus (`mmsg get focusing-client`) and, unless the
+app_id is in `paste_keystroke_apps`, types the text out with `wtype -` instead.
+If `mmsg` isn't there or fails, it falls back to the keystroke. On another
+compositor, swap `Injector.focused_appid` for whatever yours offers.
 
 **Keysym vs keycode.** The `s` flag exists here because of Dvorak. On QWERTY you
 probably don't need it.
@@ -190,6 +193,8 @@ elsewhere.
   dictations don't run together into oneword.
 - `auto_paste` — false loads the primary selection without synthesizing the
   keystroke, leaving you to paste manually.
+- `paste_keystroke_apps` — focused app_ids that get Shift+Insert; everything
+  else gets typed out. Add your terminal if it isn't kitty.
 - `[substitutions]` — Moonshine has no vocabulary biasing, so jargon it reliably
   mangles gets corrected here. Whole-word, case-insensitive, longest match
   first. The shipped entries are examples; replace them with your own.
